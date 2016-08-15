@@ -1,0 +1,64 @@
+<?xml version="1.0" encoding="utf-8"?>
+<FrameLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:tools="http://schemas.android.com/tools"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent"
+    android:paddingBottom="@dimen/activity_vertical_margin"
+    android:paddingLeft="@dimen/activity_horizontal_margin"
+    android:paddingRight="@dimen/activity_horizontal_margin"
+    android:paddingTop="@dimen/padding_top"
+    tools:context="com.ranjeevmahtani.currencyconverter.MainActivity">
+
+    <GridLayout
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_gravity="center_horizontal"
+        android:rowCount="2"
+        android:columnCount="3">
+
+        <TextView
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:text="@string/label_from_currency"
+            android:layout_marginEnd="@dimen/margin_label_end"
+            android:layout_gravity="center_vertical"/>
+
+        <android.support.v7.widget.AppCompatSpinner
+            android:id="@+id/spinner_base_currency"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_gravity="center_vertical"
+            android:spinnerMode="dialog"/>
+
+        <EditText
+            android:id="@+id/edittext_base_amount"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:inputType="numberDecimal"
+            android:hint="@string/hint_convert_amount"
+            android:layout_gravity="center_vertical"/>
+
+        <TextView
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:text="@string/label_to_currency"
+            android:layout_marginEnd="@dimen/margin_label_end"
+            android:layout_gravity="center_vertical"/>
+
+        <android.support.v7.widget.AppCompatSpinner
+            android:id="@+id/spinner_target_currency"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_gravity="center_vertical"
+            android:spinnerMode="dialog"/>
+
+        <TextView
+            android:id="@+id/textview_converted_amount"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            tools:text="40.37"
+            android:layout_gravity="center_vertical"/>
+
+    </GridLayout>
+
+</FrameLayout>

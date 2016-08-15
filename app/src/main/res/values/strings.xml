@@ -1,0 +1,10 @@
+<resources>
+    <string name="app_name">Currency Converter</string>
+
+    <string name="label_from_currency">"Convert: "</string>
+    <string name="hint_convert_amount">Amount</string>
+    <string name="label_to_currency">"Into: "</string>
+    <string name="toast_error">An error occurred when trying to convert your currency. Please try again. </string>
+    <string name="toast_offline">You are offline. Please try again when you are connected to the internet.</string>
+
+</resources>
