@@ -100,8 +100,8 @@ public class MainActivity extends AppCompatActivity
         // when the user changes either of the currencies or the amount of money being converted
         mBaseAmountEditText.addTextChangedListener(this);
 
-        // Using a custom onTouchListener/onItemSelectedListener in order to isolate and act only on
-        // onItemSelected calls that are the result of a user tap. Device rotation events thus
+        // Using a custom onTouchListener/onItemSelectedListener in order to isolate and act on
+        // onItemSelected calls that are only the result of a user tap. Device rotation events thus
         // don't result in new network calls. The class is defined at the bottom of this one.
         TouchItemSelectedListener touchItemSelectedListener = new TouchItemSelectedListener();
 
@@ -173,7 +173,7 @@ public class MainActivity extends AppCompatActivity
     }
 
     private void getConversionRate() {
-        // Check for and internet connection. If not connected, invalidate the conversion rate and
+        // Check for an internet connection. If not connected, invalidate the conversion rate and
         // the displayed value and let the user know he/she's disconnected.
         ConnectivityManager cm = (ConnectivityManager) getSystemService(Context.CONNECTIVITY_SERVICE);
         NetworkInfo activeNetwork = cm.getActiveNetworkInfo();

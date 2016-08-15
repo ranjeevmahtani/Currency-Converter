@@ -32,61 +32,31 @@ public class LatestRate {
     @JsonIgnore
     private Map<String, Object> additionalProperties = new HashMap<>();
 
-    /**
-     *
-     * @return
-     * The base
-     */
     @JsonProperty("base")
     public String getBase() {
         return base;
     }
 
-    /**
-     *
-     * @param base
-     * The base
-     */
     @JsonProperty("base")
     public void setBase(String base) {
         this.base = base;
     }
 
-    /**
-     *
-     * @return
-     * The date
-     */
     @JsonProperty("date")
     public String getDate() {
         return date;
     }
 
-    /**
-     *
-     * @param date
-     * The date
-     */
     @JsonProperty("date")
     public void setDate(String date) {
         this.date = date;
     }
 
-    /**
-     *
-     * @return
-     * The rates
-     */
     @JsonProperty("rates")
     public Rates getRates() {
         return rates;
     }
 
-    /**
-     *
-     * @param rates
-     * The rates
-     */
     @JsonProperty("rates")
     public void setRates(Rates rates) {
         this.rates = rates;
