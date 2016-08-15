@@ -9,10 +9,12 @@ import android.support.v7.widget.AppCompatSpinner;
 import android.text.Editable;
 import android.text.TextWatcher;
 import android.util.Log;
+import android.view.MotionEvent;
 import android.view.View;
 import android.widget.AdapterView;
 import android.widget.ArrayAdapter;
 import android.widget.EditText;
+import android.widget.ProgressBar;
 import android.widget.TextView;
 import android.widget.Toast;
 
@@ -27,8 +29,8 @@ import retrofit2.Response;
 import retrofit2.Retrofit;
 import retrofit2.converter.jackson.JacksonConverterFactory;
 
-public class MainActivity extends AppCompatActivity implements Callback<LatestRate>,
-        AppCompatSpinner.OnItemSelectedListener {
+public class MainActivity extends AppCompatActivity
+        implements Callback<LatestRate>, TextWatcher {
 
     private final String LOG_TAG = MainActivity.class.getSimpleName();
     private final double INVALID_CONVERSION_RATE = Double.MIN_VALUE;
@@ -43,8 +45,11 @@ public class MainActivity extends AppCompatActivity implements Callback<LatestRa
     private EditText mBaseAmountEditText;
     private TextView mConvertedAmountView;
 
+    private ProgressBar mProgressBar;
+
     private String mBaseCurrency = CURRENCY_NOT_SET;
     private String mTargetCurrency = CURRENCY_NOT_SET;
+
     private double mConversionRate = INVALID_CONVERSION_RATE;
 
     @Override
@@ -57,6 +62,7 @@ public class MainActivity extends AppCompatActivity implements Callback<LatestRa
         AppCompatSpinner targetCurrencySpinner = (AppCompatSpinner) findViewById(R.id.spinner_target_currency);
         mBaseAmountEditText = (EditText) findViewById(R.id.edittext_base_amount);
         mConvertedAmountView = (TextView) findViewById(R.id.textview_converted_amount);
+        mProgressBar = (ProgressBar) findViewById(R.id.progress_bar);
 
         // Set up adapters for the two currency spinners
         baseCurrencySpinner.setAdapter(
@@ -92,25 +98,20 @@ public class MainActivity extends AppCompatActivity implements Callback<LatestRa
 
         // Set up listeners and watchers to automatically update the converted currency amount
         // when the user changes either of the currencies or the amount of money being converted
-        mBaseAmountEditText.addTextChangedListener(new TextWatcher() {
-            @Override
-            public void beforeTextChanged(CharSequence s, int start, int count, int after) {
+        mBaseAmountEditText.addTextChangedListener(this);
 
-            }
+        // Using a custom onTouchListener/onItemSelectedListener in order to isolate and act only on
+        // onItemSelected calls that are the result of a user tap. Device rotation events thus
+        // don't result in new network calls. The class is defined at the bottom of this one.
+        TouchItemSelectedListener touchItemSelectedListener = new TouchItemSelectedListener();
 
-            @Override
-            public void onTextChanged(CharSequence s, int start, int before, int count) {
+        baseCurrencySpinner.setOnItemSelectedListener(touchItemSelectedListener);
+        baseCurrencySpinner.setOnTouchListener(touchItemSelectedListener);
 
-            }
-
-            @Override
-            public void afterTextChanged(Editable s) {
-                updateDisplay();
-            }
-        });
-        baseCurrencySpinner.setOnItemSelectedListener(this);
-        targetCurrencySpinner.setOnItemSelectedListener(this);
+        targetCurrencySpinner.setOnItemSelectedListener(touchItemSelectedListener);
+        targetCurrencySpinner.setOnTouchListener(touchItemSelectedListener);
     }
+
 
     @Override
     protected void onSaveInstanceState(Bundle outState) {
@@ -120,46 +121,29 @@ public class MainActivity extends AppCompatActivity implements Callback<LatestRa
         outState.putDouble(KEY_CONVERSION_RATE, mConversionRate);
     }
 
-    // Dictates behavior when a spinner item is selected.
-    // Updates base/target currencies as appropriate, and updates displayed value if appropriate
+
+    // Interface methods for the TextWatcher that updates the converted value upon user input
     @Override
-    public void onItemSelected(AdapterView<?> parent, View view, int position, long id) {
-        if (parent.getId() == R.id.spinner_base_currency) {
-            mBaseCurrency = mCurrencies.get(position);
-        } else if (parent.getId() == R.id.spinner_target_currency) {
-            mTargetCurrency = mCurrencies.get(position);
-        }
-        if (!mBaseCurrency.equals(mTargetCurrency)
-                && !mBaseCurrency.equals(CURRENCY_NOT_SET)
-                && !mTargetCurrency.equals(CURRENCY_NOT_SET)) {
-            // We have two distinct currencies, make an asynchronous network call to set the appropriate
-            // conversion rate. updateDisplay() gets called in subsequent callback.
-            getConversionRate();
-        } else {
-            // Just clear up values and the display
-            mConversionRate = INVALID_CONVERSION_RATE;
-            mConvertedAmountView.setText(null);
-        }
+    public void beforeTextChanged(CharSequence s, int start, int count, int after) {
+
     }
 
-    // Dictates behavior when nothing is selected in the spinner
-    // In that case, reset the appropriate spinner and the conversion rate
     @Override
-    public void onNothingSelected(AdapterView<?> parent) {
-        if (parent.getId() == R.id.spinner_base_currency) {
-            mBaseCurrency = CURRENCY_NOT_SET;
-        } else if (parent.getId() == R.id.spinner_target_currency) {
-            mTargetCurrency = CURRENCY_NOT_SET;
-        }
-        mConversionRate = INVALID_CONVERSION_RATE;
-        mConvertedAmountView.setText(null);
+    public void onTextChanged(CharSequence s, int start, int before, int count) {
+
+    }
+
+    @Override
+    public void afterTextChanged(Editable s) {
+        updateDisplay();
     }
 
     // Success callback method for the Retrofit call.
     @Override
     public void onResponse(Call<LatestRate> call, Response<LatestRate> response) {
-        // check for null all along the chain in case the API ever changes its response schema
-        if (response!=null
+        // check for null all along the chain to ensure robust behavior in case the API ever
+        // changes its response schema or removes a presently supported currency
+        if (response != null
                 && response.body() != null
                 && response.body().getRates() != null
                 && response.body().getRates().getAdditionalProperties() != null
@@ -174,6 +158,7 @@ public class MainActivity extends AppCompatActivity implements Callback<LatestRa
             mConversionRate = INVALID_CONVERSION_RATE;
             mConvertedAmountView.setText(null);
         }
+        mProgressBar.setVisibility(View.GONE);
     }
 
     // Failed callback method for the Retrofit call.
@@ -181,12 +166,13 @@ public class MainActivity extends AppCompatActivity implements Callback<LatestRa
     public void onFailure(Call<LatestRate> call, Throwable t) {
         mConversionRate = INVALID_CONVERSION_RATE;
         mConvertedAmountView.setText(null);
+        mProgressBar.setVisibility(View.GONE);
         Toast.makeText(this, getString(R.string.toast_error), Toast.LENGTH_LONG);
         Log.e(LOG_TAG, "call failed", t);
+
     }
 
     private void getConversionRate() {
-
         // Check for and internet connection. If not connected, invalidate the conversion rate and
         // the displayed value and let the user know he/she's disconnected.
         ConnectivityManager cm = (ConnectivityManager) getSystemService(Context.CONNECTIVITY_SERVICE);
@@ -197,8 +183,8 @@ public class MainActivity extends AppCompatActivity implements Callback<LatestRa
             mConvertedAmountView.setText(null);
             return;
         }
-
         // We're connected, so make the API call over the network.
+        mProgressBar.setVisibility(View.VISIBLE);
         JacksonConverterFactory jacksonConverter = JacksonConverterFactory.create();
         Retrofit retrofit = new Retrofit.Builder()
                 .baseUrl("https://api.fixer.io")
@@ -227,6 +213,61 @@ public class MainActivity extends AppCompatActivity implements Callback<LatestRa
             double baseAmount = Double.valueOf(mBaseAmountEditText.getText().toString());
             double convertedAmount = baseAmount * mConversionRate;
             mConvertedAmountView.setText(String.format(Locale.getDefault(),"%.2f",convertedAmount));
+        }
+    }
+
+    // Custom listener that merges functionality of an OnTouchListener and an OnItemSelectedListener
+    // This counteracts the repeat calls to onItemSelected on Spinners when the activity is (re)created.
+    private class TouchItemSelectedListener implements
+            AdapterView.OnItemSelectedListener,
+            View.OnTouchListener {
+
+        // a flag to indicate whether or not the event is the result of a user touch or not.
+        // this is flipped to true in onTouch, checked in onItemSelected, and flipped back to false
+        // at the end of onItemSelected.
+        boolean userTouched = false;
+
+        @Override
+        public void onItemSelected(AdapterView<?> parent, View view, int position, long id) {
+            if (parent.getId() == R.id.spinner_base_currency) {
+                mBaseCurrency = mCurrencies.get(position);
+            } else if (parent.getId() == R.id.spinner_target_currency) {
+                mTargetCurrency = mCurrencies.get(position);
+            }
+            if (userTouched) {
+                if (!mBaseCurrency.equals(mTargetCurrency)
+                        && !mBaseCurrency.equals(CURRENCY_NOT_SET)
+                        && !mTargetCurrency.equals(CURRENCY_NOT_SET)) {
+                    // We have two distinct currencies, make an asynchronous network call to set the appropriate
+                    // conversion rate. updateDisplay() gets called in subsequent callback.
+                    getConversionRate();
+                } else {
+                    // Just clear up values and the display
+                    mConversionRate = INVALID_CONVERSION_RATE;
+                    mConvertedAmountView.setText(null);
+                }
+            }
+            userTouched = false;
+        }
+
+        // Dictates behavior when nothing is selected in the spinner
+        // In that case, reset the appropriate spinner and the conversion rate
+        @Override
+        public void onNothingSelected(AdapterView<?> parent) {
+            if (parent.getId() == R.id.spinner_base_currency) {
+                mBaseCurrency = CURRENCY_NOT_SET;
+            } else if (parent.getId() == R.id.spinner_target_currency) {
+                mTargetCurrency = CURRENCY_NOT_SET;
+            }
+            mConversionRate = INVALID_CONVERSION_RATE;
+            mConvertedAmountView.setText(null);
+            userTouched = false;
+        }
+
+        @Override
+        public boolean onTouch(View v, MotionEvent event) {
+            userTouched = true;
+            return false;
         }
     }
 }

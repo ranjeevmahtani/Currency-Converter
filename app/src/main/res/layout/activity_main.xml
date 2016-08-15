@@ -56,9 +56,20 @@
             android:id="@+id/textview_converted_amount"
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
+            android:textSize="16sp"
+            android:textColor="@color/text_primary"
             tools:text="40.37"
             android:layout_gravity="center_vertical"/>
 
     </GridLayout>
+
+    <ProgressBar
+        android:id="@+id/progress_bar"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_gravity="center_horizontal"
+        android:paddingTop="@dimen/padding_top_progress_bar"
+        style="?android:attr/progressBarStyleLarge"
+        android:visibility="gone"/>
 
 </FrameLayout>
